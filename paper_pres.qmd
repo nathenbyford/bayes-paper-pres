@@ -1,0 +1,233 @@
+---
+title: 'A Hierarchical framework for Correcting Under-Reporting in Count Data'
+subtitle: '[Stoner et al.]'
+date: today
+date-format: long
+format: 
+  baylor_theme-revealjs:
+    author: ' '
+    footer: 'Nathen Byford'
+    logo: logo.png
+bibliography: research.bib
+csl: ieee.csl
+---
+
+# Introduction
+
+## What is Under-Reporting?
+
+- Consider count data with true counts $y_i$
+    - If $y_i$ is perfectly observed, the counts can be modeled by an appropriate conditional distribution $p(y_i | \boldsymbol{\theta})$
+    - Usually either Poisson or Negative Binomial
+  
+:::{.fragment}
+- In some cases the true counts are not observed, but instead $z_i$ are observed such that $z_i \le y_i$
+- Using the conditional distribution above on the observed counts $z_i$ can bias the results of the model if under-reporting is not accounted for
+
+:::
+
+
+## Motivation
+
+- TB cases in Brazil can be assumed as under reported from previous research for a few reasons
+    - Under developed rural regions
+    - Immature disease tracking infrastructure
+    - High cost of testing
+    - etc.
+
+- This paper attempts to build a model so that the severity of under-reporting is estimated and potentially informed by available covariates that relate to the under-reporting mechanism [@stoner_hierarchical_2019]
+
+
+## Observed data 
+
+:::{.columns}
+::::{.column width=50%}
+- Sub region data of TB cases
+- Annual cases from 2012 - 2014
+- The TB detection rate was estimated at 91%, 84%, and 87% in Brazil from 2012-2014[^1]
+- Spatial relationship
+::::
+
+::::{.column width=50%}
+![](data.png)
+::::
+:::
+
+[^1]: World Health Organization 2017
+
+
+## Previous methods
+
+1. Using validation data
+  - Use a more accurate data set to build a model based on the error prone data
+  
+:::{.fragment}
+2. Censored Likelihood methods
+  - Use standard likelihood with indicator variable for full reporting
+  - Requires information to determine indicator of under-reporting
+  - Possible to use a threshold if no information about under-reporting counts
+:::
+
+
+## Censored likelihood
+
+The censored likelihood is written as
+
+:::{.def}
+$$
+p(\boldsymbol{y} | \boldsymbol{z, \theta}) = \prod_{I_i=1} p(y_i|\boldsymbol{\theta}) \prod_{I_i = 0} p(y_i \ge z_i | \boldsymbol{\theta})
+$$
+:::
+Where $I_i$ is the indicator for which data are under reported.
+
+- $I_i = 1$ when $z_i = y_i$
+- By accounting for the under reporting in the model design, a more robust inference on $\boldsymbol{\theta}$ is possible
+
+:::{.aside}
+When no information is available we can threshold to get values of $I_i$.
+:::
+
+
+# Model
+
+## The Poisson-Logistic model
+
+- Instead of using an indicator variable, consider a continuous range [0,1]
+    - This can be considered as the proportion of true counts
+- Using a hierarchical model consisting of:
+    - A binomial component on the observed count $z_i$ 
+    - A latent Poisson model for the true counts $y_i$
+- The Poisson-Logistic has been used across many fields; economics, criminology, natural hazards, epidemiology[^2], etc.
+
+[^2]: Shout out to Greer, Stamey, and Young
+
+## Poisson-Logistic model {.smaller}
+
+The Poisson-Logistic or Pogit model is given by
+\begin{align*}
+z_i | y_i &\sim \text{Binomial}(\pi_i, y_i) \\
+\log \left(\frac{\pi_i}{1 - \pi_i}\right) &= \beta_0 + \sum_{j=1}^{J} \beta_j w_i^{j} \\
+y_i &\sim \text{Poisson}(\lambda_i) \\
+\log(\lambda_i) &= \alpha_0 + \sum_{k=1}^{K}\alpha_k x_i^{(k)}
+\end{align*}
+
+- The vectors $\boldsymbol{\alpha} = (\alpha_0, \ldots, \alpha_K)$ and $\boldsymbol{\beta} = (\beta_0, \ldots, \beta_J)$ are parameters to be estimated
+- Mean-centered $\mathbf{X}$ and $\mathbf{W}$ permit that $\alpha_0$ and $\beta_0$ are interpreted as the mean of $y_i$ on the log scale, and the mean of the reporting rate $\pi_i$ on the logistic scale, with the covariates at their means
+
+## Extended model {.smaller}
+
+Let $z_{t, s}$ be the observed (under reported) counts, $y_{t, s}$ be the true unknown counts, $\pi_s$ be the under reporting rate, and $\lambda_{t, s}$ be the Poisson mean.
+
+:::{.def}
+The hierarchical model from the paper is
+\begin{align*}
+z_{t, s} | y_{t, s}, \gamma_{t, s} \sim \text{Binomial}(\pi_s, &y_{t, s}) \\
+&\downarrow \\
+&y_{t, s} | \phi_s, \theta_s \sim \text{Poisson}(\lambda_{t, s}).
+\end{align*}
+Where $\pi_s$ and $\lambda_{t, s}$ are defined as 
+\begin{align*}
+\log\left(\frac{\pi_s}{1 - \pi_s}\right) &= \beta_0 + g(u_s) + \gamma_{t, s} \\
+\log(\lambda_{t, s}) &= \log(P_{t, s}) + a_0 + f_1(x_s^{(1)}) + f_2(x_s^{(2)}) \\
+  &\quad + f_3(x_s^{(3)}) + f_4(x_s^{(4)}) + \phi_s + \theta_s.
+\end{align*}
+:::
+
+## Link functions {.smaller}
+
+Taking a closer look at the link functions for $\pi_s$ and $\lambda_{t,s}$,
+
+:::{.def}
+\begin{align*}
+\log\left(\frac{\pi_s}{1 - \pi_s}\right) &= \beta_0 + g(u_s) + \gamma_{t, s} \\
+\log(\lambda_{t, s}) &= \log(P_{t, s}) + a_0 + f_1(x_s^{(1)}) + f_2(x_s^{(2)}) \\
+  &\quad + f_3(x_s^{(3)}) + f_4(x_s^{(4)}) + \phi_s + \theta_s.
+\end{align*}
+:::
+
+
+Where; $u_s$ = treatment timeliness, $P_{t, s}$ = population,  $x_s^{(1)}$ =  unemployment, $x_s^{(2)}$ = urbanization, $x_s^{(3)}$ = density, and $x_s^{(4)}$ = indigenous.
+
+Residual spatial variation in the Poisson mean $\lambda_{t,s}$ is captured by unstructured random effects $\theta_s$ and structured effects in $\phi_s$. 
+
+## Link functions {.smaller auto-animate=true}
+
+Taking a closer look at the link functions for $\pi_s$ and $\lambda_{t,s}$,
+
+:::{.def}
+\begin{align*}
+\log\left(\frac{\pi_s}{1 - \pi_s}\right) &= \beta_0 + g(u_s) + \gamma_{t, s} \\
+\log(\lambda_{t, s}) &= \log(P_{t, s}) + a_0 + f_1(x_s^{(1)}) + f_2(x_s^{(2)}) \\
+  &\quad + f_3(x_s^{(3)}) + f_4(x_s^{(4)}) + \phi_s + \theta_s.
+\end{align*}
+:::
+
+
+Where; $u_s$ = treatment timeliness, $P_{t, s}$ = population,  $x_s^{(1)}$ =  unemployment, $x_s^{(2)}$ = urbanization, $x_s^{(3)}$ = density, and $x_s^{(4)}$ = indigenous.
+
+Residual spatial variation in the Poisson mean $\lambda_{t,s}$ is captured by unstructured random effects $\theta_s$ and structured effects in $\phi_s$. 
+
+An ICAR[^3] model was assumed for the structured spatial effect $\phi_s$ with variance $\nu^2$.
+
+Normal models were assumed for $\theta_s$ and $\gamma_{t, s}$ with variance $\sigma^2$ and $\epsilon^2$ respectively.
+
+[^3]: Intrinsic Gaussian conditional autoregressive
+
+# Results
+
+## Simulation Results
+- Simulated data with spatial correlation and under reporting
+- In sensitivity analysis it was found that the model with no completely observed values is robust in terms of quantifying uncertainty
+    - As long as the practitioner specifies a prior for $\beta_0$ that is informative
+
+
+## Model results for TB counts {.smaller}
+
+:::{.columns}
+:::{.column width=16%}
+:::
+:::{.column width=34%}
+![](pi_map.png)
+:::
+
+:::{.column width=34%}
+![](combined_spatial.png)
+:::
+:::
+
+::::{.columns}
+:::{.column width=50%}
+- The predicted reporting probabilities ($\pi_s$)
+- There appears to be substantial clustering 
+    - High reporting in the south central part of Brazil
+:::
+
+:::{.column width=50%}
+- The predicted residual spatial variability in the TB incidence rate ($\phi_s + \theta_s$)
+- There appears to be substantial clustering 
+    - Negative values in the center of Brazil
+    - Positive values in the north west
+:::
+::::
+
+## Estimated true values {.smaller}
+
+:::{.center}
+![](bar.png){width=70%}
+:::
+Here the observed counts are shown along with the 5%, 50%, and 95% quantiles for the predicted unreported cases.
+
+## Findings
+
+- This is a flexible model for dealing with under-reporting data
+    - By using informative priors
+    - Without need for validation data
+- Provides predictions at a micro-regional level
+    - Can guide best use of resources to improve reporting
+
+# Thank you! {transition="convex-in convex-out"}
+
+## References {transition="convex-in"}
+
+:::{#refs}
+:::
