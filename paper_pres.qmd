@@ -45,7 +45,7 @@ csl: ieee.csl
 - Sub region data of TB cases
 - Annual cases from 2012 - 2014
 - The TB detection rate was estimated at 91%, 84%, and 87% in Brazil from 2012-2014[^1]
-- Spatial relationship
+- Spatial clustering
 ::::
 
 ::::{.column width=50%}
